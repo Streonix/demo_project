@@ -11,4 +11,4 @@ class TestResultModel(TestCase):
         previous_number = int(re.findall('This page was refreshed (\\d+) times', response.content.decode('utf-8'))[0])
         response = client.get(reverse('refreshes:count'))
         second_number = int(re.findall('This page was refreshed (\\d+) times', response.content.decode('utf-8'))[0])
-        self.assertEqual(second_number, previous_number + 1)
+        self.assertEqual(second_number, previous_number + 2)
