@@ -1,0 +1,70 @@
+version: "3.9"
+
+networks:
+  demo_project_network-postgres:
+    driver: bridge
+  demo_project_network-nginx:
+    driver: bridge
+
+volumes:
+  pg_data:
+
+services:
+  web:
+    container_name: demo_project-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SECRET_KEY=${SECRET_KEY}
+    profiles:
+      - prod
+      - dev
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    restart: always
+    command: gunicorn -c gunicorn.py demo_project.wsgi:application --reload
+    networks:
+      - demo_project_network-nginx
+      - demo_project_network-postgres
+
+  postgres_db:
+    container_name: demo_project-postgres
+    build: docker/postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} --dbname ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    restart: always
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    profiles:
+      - prod
+      - dev
+      - testing
+    networks:
+      - demo_project_network-postgres
+
+  nginx:
+    profiles:
+      - prod
+    container_name: demo_project-nginx
+    image: nginx
+    ports:
+      - 8000:80
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    volumes_from:
+      - web:ro
+    depends_on:
+      - web
+    networks:
+      - demo_project_network-nginx

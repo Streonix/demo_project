@@ -1,0 +1,62 @@
+name: Demo project CI/CD
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  SECRET_KEY: ${{secrets.SECRET_KEY}}
+  POSTGRES_USER: "streonix"
+  POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
+  POSTGRES_DB: "demo_db"
+  POSTGRES_HOST: "localhost"
+  POSTGRES_PORT: 5432
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the docker-compose testing profile
+      run: docker-compose --profile testing up -d
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pipenv install --system --deploy --ignore-pipfile
+        pip install prospector
+    - name: Analysing the code with prospector
+      run: |
+        prospector
+    - name: Run Tests
+      run: |
+        python src/manage.py test
+  automerge:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: automerge
+        uses: "pascalgn/automerge-action@v0.13.1"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  
+  deploy:
+    needs: automerge
+    name: Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploying process
+      run: |
+        echo "deploying..."
+        echo "done!"

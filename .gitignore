@@ -1,0 +1,8 @@
+.env*
+docker-compose.override.yml
+docker-compose.prod.yml
+Dockerfile-dev
+/src/static/
+/src/media/
+.idea/
+__pycache__

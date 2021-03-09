@@ -1,0 +1,37 @@
+output-format: text
+
+strictness: veryhigh
+test-warnings: true
+doc-warnings: true
+member-warnings: true
+inherits:
+  - default
+ignore-paths:
+  - manage.py
+  - gunicorn.py/
+autodetect: true
+max-line-length: 120
+
+dodgy:
+  run: true
+
+mccabe:
+  run: true
+
+pep8:
+  full: true
+  options:
+    max-line-length: 120
+
+pep257:
+  run: False
+
+pyflakes:
+  run: true
+
+pylint:
+  run: True
+  disable:
+    - missing-module-docstring
+    - missing-function-docstring
+    - missing-class-docstring
